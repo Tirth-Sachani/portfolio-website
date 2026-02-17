@@ -68,13 +68,11 @@ export default function Contact() {
     setTimeout(() => setToast(null), 5000);
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     if (status === 'sending') return;
 
-    setStatus('sending');
-
-    // 1. Prepare WhatsApp details first (this shouldn't fail)
+    // 1. Prepare WhatsApp details
     const whatsappNumber = '919825870578';
     const whatsappMsg = `New Project Inquiry 🚀
 Name: ${formData.name}
@@ -84,18 +82,25 @@ Budget: ${formData.budget || 'Not specified'}
 Message:
 ${formData.message}`;
 
-    const encodedMsg = encodeURIComponent(whatsappMsg);
-    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMsg}`;
+    const whatsappUrl = `https://api.whatsapp.com/send?phone=${whatsappNumber}&text=${encodeURIComponent(whatsappMsg)}`;
 
-    // 2. Execute WhatsApp Redirect IMMEDIATELY (Priority & Pop-up Fix)
-    // Browsers block window.open if it happens after an 'await' delay
-    window.open(whatsappUrl, '_blank');
+    // 2. Execute WhatsApp Redirect IMMEDIATELY (Top Priority)
+    // This MUST be synchronous to bypass aggressive browser pop-up blockers
+    const whatsappWindow = window.open(whatsappUrl, '_blank');
 
-    try {
-      // 3. Fire off background tasks (Firebase + EmailJS)
-      const backgroundTasks = async () => {
+    // Fallback if window.open was blocked (unlikely now, but good practice)
+    if (!whatsappWindow) {
+      console.warn('Pop-up blocked, attempting direct link');
+    }
+
+    // 3. Handle State & Background Tasks
+    setStatus('sending');
+
+    // Run background tasks (Firebase + EmailJS) without blocking the UI
+    (async () => {
+      try {
+        // Firebase Backup
         try {
-          // Firebase Backup
           await addDoc(collection(db, 'contacts'), {
             name: formData.name,
             email: formData.email,
@@ -109,9 +114,8 @@ ${formData.message}`;
           console.error('Firebase save failed:', JSON.stringify(fbErr, null, 2));
         }
 
+        // EmailJS Notification
         try {
-          // EmailJS Notification
-          // NOTE: You need to replace these placeholders with your actual keys from emailjs.com
           await emailjs.send(
             'YOUR_SERVICE_ID',
             'YOUR_TEMPLATE_ID',
@@ -128,23 +132,18 @@ ${formData.message}`;
         } catch (emailErr) {
           console.error('Email notification failed (Check your keys):', JSON.stringify(emailErr, null, 2));
         }
-      };
 
-      // Run background tasks without waiting if we want maximum speed, 
-      // but await them here ensures we only reset state after they finish.
-      await backgroundTasks();
-
-      setStatus('success');
-      setFormData({ name: '', email: '', subject: '', budget: '', message: '' });
-      showToast('success', 'Opening WhatsApp...');
-
-    } catch (err) {
-      console.error('Critical submission error:', JSON.stringify(err, null, 2));
-      setStatus('error');
-      showToast('error', 'Something went wrong. Please try again.');
-    }
-
-    setTimeout(() => setStatus('idle'), 3000);
+        setStatus('success');
+        setFormData({ name: '', email: '', subject: '', budget: '', message: '' });
+        showToast('success', 'Opening WhatsApp...');
+      } catch (err) {
+        console.error('Background task error:', JSON.stringify(err, null, 2));
+        setStatus('error');
+        showToast('error', 'Something went wrong. Please try again.');
+      } finally {
+        setTimeout(() => setStatus('idle'), 3000);
+      }
+    })();
   };
 
   useEffect(() => {
