@@ -117,18 +117,18 @@ export default function Footer() {
           <div className="footer__col">
             <h4 className="footer__col-title">Contact Info</h4>
             <div className="footer__contact-list">
-              <a href="mailto:hello@example.com" className="footer__contact-item">
+              <a href="mailto:tirthsachnai6105@gmail.com" className="footer__contact-item">
                 <HiMail className="footer__contact-icon" />
                 <div>
                   <span className="footer__contact-label">Email</span>
-                  <span className="footer__contact-value">hello@example.com</span>
+                  <span className="footer__contact-value">tirthsachnai6105@gmail.com</span>
                 </div>
               </a>
-              <a href="tel:+911234567890" className="footer__contact-item">
+              <a href="tel:+919825870578" className="footer__contact-item">
                 <HiPhone className="footer__contact-icon" />
                 <div>
                   <span className="footer__contact-label">Phone</span>
-                  <span className="footer__contact-value">+91 12345 67890</span>
+                  <span className="footer__contact-value">+91 98258 70578</span>
                 </div>
               </a>
               <div className="footer__contact-item">

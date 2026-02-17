@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
-import { HiArrowRight, HiDownload } from 'react-icons/hi';
+import { HiArrowRight, HiChatAlt2 } from 'react-icons/hi';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -161,7 +161,7 @@ export default function Hero() {
               className="btn-outline"
               onClick={e => { e.preventDefault(); document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' }); }}
             >
-              <HiDownload /> Download CV
+              Let's Work Together <HiChatAlt2 />
             </a>
           </div>
 

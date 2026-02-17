@@ -7,6 +7,7 @@ import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { HiMail, HiLocationMarker, HiPhone, HiClock, HiLightningBolt, HiChat, HiCheckCircle, HiExclamationCircle } from 'react-icons/hi';
 import { FaGithub, FaLinkedinIn, FaTwitter, FaDribbble, FaWhatsapp } from 'react-icons/fa';
+import emailjs from '@emailjs/browser';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -72,24 +73,80 @@ export default function Contact() {
     if (status === 'sending') return;
 
     setStatus('sending');
+
+    // 1. Prepare WhatsApp details first (this shouldn't fail)
+    const whatsappNumber = '919825870578';
+    const whatsappMsg = `New Project Inquiry 🚀
+Name: ${formData.name}
+Email: ${formData.email}
+Subject: ${formData.subject}
+Budget: ${formData.budget || 'Not specified'}
+Message:
+${formData.message}`;
+
+    const encodedMsg = encodeURIComponent(whatsappMsg);
+    const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMsg}`;
+
     try {
-      await addDoc(collection(db, 'contacts'), {
-        name: formData.name,
-        email: formData.email,
-        subject: formData.subject,
-        budget: formData.budget,
-        message: formData.message,
-        createdAt: serverTimestamp(),
-        read: false,
-      });
+      // 2. Fire off background tasks but don't let them kill the whole flow
+      // We wrap them in their own try/catch to ensure WhatsApp redirect works
+      const backgroundTasks = async () => {
+        try {
+          // Firebase Backup
+          await addDoc(collection(db, 'contacts'), {
+            name: formData.name,
+            email: formData.email,
+            subject: formData.subject,
+            budget: formData.budget,
+            message: formData.message,
+            createdAt: serverTimestamp(),
+            read: false,
+          });
+        } catch (fbErr) {
+          console.error('Firebase save failed:', JSON.stringify(fbErr, null, 2));
+        }
+
+        try {
+          // EmailJS Notification
+          // NOTE: You need to replace these placeholders with your actual keys from emailjs.com
+          await emailjs.send(
+            'YOUR_SERVICE_ID',
+            'YOUR_TEMPLATE_ID',
+            {
+              from_name: formData.name,
+              from_email: formData.email,
+              subject: formData.subject,
+              budget: formData.budget,
+              message: formData.message,
+              to_email: 'tirthsachnai6105@gmail.com',
+            },
+            'YOUR_PUBLIC_KEY'
+          );
+        } catch (emailErr) {
+          console.error('Email notification failed (Check your keys):', JSON.stringify(emailErr, null, 2));
+        }
+      };
+
+      // We wait for the attempts, but we don't throw if they fail internally
+      await backgroundTasks();
+
+      // 3. Execute WhatsApp Redirect (Priority)
+      window.open(whatsappUrl, '_blank');
+
       setStatus('success');
       setFormData({ name: '', email: '', subject: '', budget: '', message: '' });
-      showToast('success', 'Message sent successfully! I\'ll get back to you soon.');
+      showToast('success', 'Message sent! Opening WhatsApp for you...');
+
     } catch (err) {
-      console.error('Error sending message:', err);
+      // This catch only triggers if the logic above fails fundamentally (very unlikely)
+      console.error('Critical submission error:', JSON.stringify(err, null, 2));
       setStatus('error');
-      showToast('error', 'Failed to send message. Please try again or email me directly.');
+      showToast('error', 'Something went wrong. Opening WhatsApp directly...');
+
+      // Attempt bypass redirect even on critical error
+      window.open(whatsappUrl, '_blank');
     }
+
     setTimeout(() => setStatus('idle'), 3000);
   };
 
@@ -312,14 +369,14 @@ export default function Contact() {
               <div className="contact__info-icon"><HiMail /></div>
               <div>
                 <span className="contact__info-label">Email</span>
-                <a href="mailto:hello@example.com" className="contact__info-value">hello@example.com</a>
+                <a href="mailto:tirthsachnai6105@gmail.com" className="contact__info-value">tirthsachnai6105@gmail.com</a>
               </div>
             </div>
             <div className="contact__info-card glass-card">
               <div className="contact__info-icon"><HiPhone /></div>
               <div>
                 <span className="contact__info-label">Phone</span>
-                <span className="contact__info-value">+91 12345 67890</span>
+                <a href="tel:+919825870578" className="contact__info-value">+91 98258 70578</a>
               </div>
             </div>
             <div className="contact__info-card glass-card">
@@ -347,7 +404,7 @@ export default function Contact() {
               <div className="contact__info-icon" style={{ background: 'rgba(236, 72, 153, 0.08)', borderColor: 'rgba(236, 72, 153, 0.12)', color: '#ec4899' }}><HiChat /></div>
               <div>
                 <span className="contact__info-label">Prefer Chat?</span>
-                <span className="contact__info-value">DM me on any platform below</span>
+                <span className="contact__info-value">WhatsApp / Discord: tirthsachani_39333</span>
               </div>
             </div>
 

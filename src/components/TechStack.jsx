@@ -34,14 +34,23 @@ const techItems = [
   { icon: <FaFigma />, name: 'Figma', color: '#F24E1E', category: 'Creative' },
 ];
 
+/* ── Static zigzag offset (integer px, no fractional values) ── */
+function getZigzagOffset(index) {
+  return index % 2 === 0 ? -16 : 0;
+}
+
 function TechCard({ item, index }) {
-  /* Each card gets a staggered animation-delay for the bounce */
   const delay = (index % techItems.length) * 0.15;
+  const zigzagY = getZigzagOffset(index);
 
   return (
     <div
       className="ticker-card"
-      style={{ '--accent': item.color, '--bounce-delay': `${delay}s` }}
+      style={{
+        '--accent': item.color,
+        '--bounce-delay': `${delay}s`,
+        '--zigzag-y': `${zigzagY}px`,
+      }}
     >
       <div className="ticker-card__glow" />
       <div className="ticker-card__icon" style={{ color: item.color }}>
@@ -55,9 +64,14 @@ function TechCard({ item, index }) {
 
 export default function TechStack() {
   const sectionRef = useRef(null);
+  const trackRef = useRef(null);
+
+  /* ── Constant scroll speed across ALL devices (px/s) ── */
+  const PIXELS_PER_SECOND = 75;
 
   useEffect(() => {
     const ctx = gsap.context(() => {
+      /* Header entrance animation */
       gsap.from('.tech-ticker__header', {
         opacity: 0,
         y: 40,
@@ -68,12 +82,50 @@ export default function TechStack() {
           start: 'top 80%',
         }
       });
+
+      /* ── Distance-normalized ticker scroll ── */
+      const track = trackRef.current;
+      if (!track) return;
+
+      let tickerTween = null;
+
+      function createTicker() {
+        if (tickerTween) tickerTween.kill();
+
+        const trackWidth = track.scrollWidth;
+        const distancePx = trackWidth / 2;
+        const duration = distancePx / PIXELS_PER_SECOND;
+
+        tickerTween = gsap.fromTo(
+          track,
+          { x: 0 },
+          {
+            x: -distancePx,
+            duration,
+            ease: 'none',
+            repeat: -1,
+            force3D: true,
+          }
+        );
+      }
+
+      createTicker();
+
+      const onResize = () => {
+        clearTimeout(onResize._t);
+        onResize._t = setTimeout(createTicker, 200);
+      };
+      window.addEventListener('resize', onResize);
+
+      return () => {
+        window.removeEventListener('resize', onResize);
+        if (tickerTween) tickerTween.kill();
+      };
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  // Duplicate items for seamless loop
   const duplicated = [...techItems, ...techItems];
 
   return (
@@ -90,7 +142,7 @@ export default function TechStack() {
 
       {/* Infinite Ticker Row */}
       <div className="tech-ticker__viewport">
-        <div className="tech-ticker__track">
+        <div className="tech-ticker__track" ref={trackRef}>
           {duplicated.map((item, i) => (
             <TechCard key={`${item.name}-${i}`} item={item} index={i} />
           ))}
@@ -158,12 +210,9 @@ export default function TechStack() {
           display: flex;
           gap: 20px;
           width: max-content;
-          animation: ticker-scroll 40s linear infinite;
-        }
-
-        @keyframes ticker-scroll {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
+          will-change: transform;
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
         }
 
         /* ── Edge Fades ── */
@@ -184,10 +233,13 @@ export default function TechStack() {
           background: linear-gradient(to left, #0B1026, transparent);
         }
 
-        /* ── Cards with Bounce ── */
+        /* ═══════════════════════════════════════════════
+           DESKTOP CARDS — animated bounce (zigzag)
+           ═══════════════════════════════════════════════ */
         .ticker-card {
           flex-shrink: 0;
           width: 130px;
+          height: 140px;              /* ← locked height */
           padding: 22px 14px 18px;
           text-align: center;
           border-radius: 20px;
@@ -198,7 +250,11 @@ export default function TechStack() {
           position: relative;
           cursor: pointer;
           overflow: hidden;
-          /* Bounce animation — staggered per card */
+          /* GPU compositing */
+          will-change: transform;
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
+          /* Desktop bounce animation — staggered per card */
           animation: card-bounce 2.2s ease-in-out infinite;
           animation-delay: var(--bounce-delay, 0s);
           transition: border-color 0.4s ease, box-shadow 0.4s ease;
@@ -206,12 +262,12 @@ export default function TechStack() {
 
         @keyframes card-bounce {
           0%, 100% { transform: translateY(0); }
-          40% { transform: translateY(-18px); }
-          60% { transform: translateY(-14px); }
-          80% { transform: translateY(2px); }
+          40%      { transform: translateY(-18px); }
+          60%      { transform: translateY(-14px); }
+          80%      { transform: translateY(2px); }
         }
 
-        /* Hover */
+        /* Hover (desktop only — disabled on mobile below) */
         .ticker-card:hover {
           border-color: var(--accent, rgba(0, 229, 255, 0.35));
           box-shadow: 0 0 30px rgba(0, 229, 255, 0.12), 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -267,44 +323,74 @@ export default function TechStack() {
           z-index: 1;
         }
 
-        /* ── Responsive ── */
+        /* ═══════════════════════════════════════════════
+           TABLET (≤900px)
+           — Reduce bounce amplitude, keep animation
+           ═══════════════════════════════════════════════ */
         @media (max-width: 900px) {
           .tech-ticker__title { font-size: 2.8rem; }
           .tech-ticker-section { padding: 80px 0 90px; }
-          .tech-ticker__track { gap: 14px; animation-duration: 55s; }
+          .tech-ticker__track { gap: 14px; }
           .ticker-card {
             width: 110px;
+            height: 120px;
             padding: 18px 10px 14px;
             border-radius: 16px;
-            animation-duration: 3.5s;
           }
           @keyframes card-bounce {
             0%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-12px); }
-            60% { transform: translateY(-9px); }
-            80% { transform: translateY(1px); }
+            40%      { transform: translateY(-12px); }
+            60%      { transform: translateY(-9px); }
+            80%      { transform: translateY(2px); }
           }
           .ticker-card__icon { font-size: 1.6rem; }
           .ticker-card__name { font-size: 0.7rem; }
           .tech-ticker__fade { width: 60px; }
         }
+
+        /* ═══════════════════════════════════════════════
+           MOBILE (≤600px)
+           — DISABLE animated bounce entirely
+           — Apply STATIC zigzag offset via translate3d
+           — Lock all dimensions
+           — Disable hover transforms
+           — Force GPU compositing
+           ═══════════════════════════════════════════════ */
         @media (max-width: 600px) {
           .tech-ticker__title { font-size: 2.2rem; }
           .tech-ticker-section { padding: 60px 0 70px; }
-          .tech-ticker__track { gap: 10px; animation-duration: 70s; }
+          .tech-ticker__track { gap: 10px; }
+
           .ticker-card {
             width: 95px;
+            height: 108px;
             padding: 14px 8px 12px;
             border-radius: 14px;
-            animation-duration: 4.5s;
+            /* KILL the bounce animation — static zigzag only */
+            animation: none !important;
+            /* Apply static zigzag offset (integer px, set per card) */
+            transform: translate3d(0, var(--zigzag-y, 0px), 0);
+            /* Disable layout-affecting transitions */
+            transition: none;
           }
-          @keyframes card-bounce {
-            0%, 100% { transform: translateY(0); }
-            40% { transform: translateY(-8px); }
-            60% { transform: translateY(-6px); }
-            80% { transform: translateY(1px); }
+
+          /* Disable hover effects on mobile */
+          .ticker-card:hover {
+            border-color: rgba(255, 255, 255, 0.06);
+            box-shadow: none;
+            animation-play-state: running;
           }
-          .ticker-card__icon { font-size: 1.4rem; margin-bottom: 6px; }
+          .ticker-card:hover .ticker-card__glow { opacity: 0; }
+          .ticker-card:hover .ticker-card__icon {
+            filter: drop-shadow(0 0 6px rgba(255,255,255,0.08));
+            transform: none;
+          }
+
+          .ticker-card__icon {
+            font-size: 1.4rem;
+            margin-bottom: 6px;
+            transition: none;
+          }
           .ticker-card__name { font-size: 0.65rem; }
           .ticker-card__cat { font-size: 0.55rem; }
           .tech-ticker__fade { width: 40px; }
