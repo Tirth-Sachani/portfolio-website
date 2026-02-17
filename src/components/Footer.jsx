@@ -8,7 +8,7 @@ const socialLinks = [
   { icon: <FaLinkedinIn />, href: '#', label: 'LinkedIn' },
   { icon: <FaTwitter />, href: '#', label: 'Twitter' },
   { icon: <FaDribbble />, href: '#', label: 'Dribbble' },
-  { icon: <FaWhatsapp />, href: '#', label: 'WhatsApp' },
+  { icon: <FaWhatsapp />, href: 'https://wa.me/919825870578', label: 'WhatsApp' },
 ];
 
 const quickLinks = [

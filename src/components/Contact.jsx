@@ -16,7 +16,7 @@ const socialLinks = [
   { icon: <FaLinkedinIn />, href: '#', label: 'LinkedIn' },
   { icon: <FaTwitter />, href: '#', label: 'Twitter' },
   { icon: <FaDribbble />, href: '#', label: 'Dribbble' },
-  { icon: <FaWhatsapp />, href: '#', label: 'WhatsApp' },
+  { icon: <FaWhatsapp />, href: 'https://wa.me/919825870578', label: 'WhatsApp' },
 ];
 
 const processSteps = [
@@ -87,9 +87,12 @@ ${formData.message}`;
     const encodedMsg = encodeURIComponent(whatsappMsg);
     const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMsg}`;
 
+    // 2. Execute WhatsApp Redirect IMMEDIATELY (Priority & Pop-up Fix)
+    // Browsers block window.open if it happens after an 'await' delay
+    window.open(whatsappUrl, '_blank');
+
     try {
-      // 2. Fire off background tasks but don't let them kill the whole flow
-      // We wrap them in their own try/catch to ensure WhatsApp redirect works
+      // 3. Fire off background tasks (Firebase + EmailJS)
       const backgroundTasks = async () => {
         try {
           // Firebase Backup
@@ -127,24 +130,18 @@ ${formData.message}`;
         }
       };
 
-      // We wait for the attempts, but we don't throw if they fail internally
+      // Run background tasks without waiting if we want maximum speed, 
+      // but await them here ensures we only reset state after they finish.
       await backgroundTasks();
-
-      // 3. Execute WhatsApp Redirect (Priority)
-      window.open(whatsappUrl, '_blank');
 
       setStatus('success');
       setFormData({ name: '', email: '', subject: '', budget: '', message: '' });
-      showToast('success', 'Message sent! Opening WhatsApp for you...');
+      showToast('success', 'Opening WhatsApp...');
 
     } catch (err) {
-      // This catch only triggers if the logic above fails fundamentally (very unlikely)
       console.error('Critical submission error:', JSON.stringify(err, null, 2));
       setStatus('error');
-      showToast('error', 'Something went wrong. Opening WhatsApp directly...');
-
-      // Attempt bypass redirect even on critical error
-      window.open(whatsappUrl, '_blank');
+      showToast('error', 'Something went wrong. Please try again.');
     }
 
     setTimeout(() => setStatus('idle'), 3000);
