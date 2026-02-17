@@ -1,8 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
+import { useEffect, useRef } from 'react';
+import { gsap } from 'gsap';
 import { HiCode, HiCube, HiColorSwatch, HiLightningBolt, HiCloud, HiDeviceMobile } from 'react-icons/hi';
+import Reveal from './Reveal';
 
 const services = [
   {
@@ -44,43 +45,74 @@ const services = [
 ];
 
 export default function Services() {
-  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
+  const sectionRef = useRef(null);
+
+  const onCardMove = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    const rotateX = (centerY - y) / 10;
+    const rotateY = (x - centerX) / 10;
+
+    gsap.to(e.currentTarget, {
+      rotateX,
+      rotateY,
+      duration: 0.5,
+      ease: 'power2.out',
+    });
+  };
+
+  const onCardLeave = (e) => {
+    gsap.to(e.currentTarget, {
+      rotateX: 0,
+      rotateY: 0,
+      duration: 0.5,
+      ease: 'power2.out',
+    });
+  };
 
   return (
-    <section className="section" id="services" ref={ref}>
+    <section className="section" id="services" ref={sectionRef} style={{ perspective: '1200px' }}>
       <div className="bg-radial" style={{ top: '10%', right: '-300px', background: 'var(--neon-purple)', width: 500, height: 500 }} />
       <div className="container">
-        <div className="section-header">
-          <span className="section-label">Services</span>
-          <h2 className="section-title">What I Offer</h2>
-          <p className="section-subtitle">
-            End-to-end digital solutions from concept to deployment, built with precision and passion.
-          </p>
-        </div>
+        <Reveal direction="up">
+          <div className="section-header">
+            <span className="section-label">Services</span>
+            <h2 className="section-title">What I Offer</h2>
+            <p className="section-subtitle">
+              End-to-end digital solutions from concept to deployment, built with precision and passion.
+            </p>
+          </div>
+        </Reveal>
 
         <div className="services-grid">
-          {services.map((svc, i) => (
-            <motion.div
-              key={svc.title}
-              className="service-card glass-card"
-              initial={{ opacity: 0, y: 40 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.1, ease: [0.25, 0.46, 0.45, 0.94] }}
-            >
-              <div className="service-card__icon-wrap">
-                <div className="service-card__icon">{svc.icon}</div>
-                <div className="service-card__icon-glow" />
+          <Reveal direction="up" stagger={0.1}>
+            {services.map((svc, i) => (
+              <div
+                key={svc.title}
+                className="service-card glass-card"
+                onMouseMove={onCardMove}
+                onMouseLeave={onCardLeave}
+                style={{ transformStyle: 'preserve-3d' }}
+              >
+                <div className="service-card__icon-wrap">
+                  <div className="service-card__icon">{svc.icon}</div>
+                  <div className="service-card__icon-glow" />
+                </div>
+                <h3 className="service-card__title">{svc.title}</h3>
+                <p className="service-card__desc">{svc.desc}</p>
+                <div className="service-card__tags">
+                  {svc.tags.map(tag => (
+                    <span key={tag} className="service-card__tag">{tag}</span>
+                  ))}
+                </div>
+                <div className="service-card__border" />
               </div>
-              <h3 className="service-card__title">{svc.title}</h3>
-              <p className="service-card__desc">{svc.desc}</p>
-              <div className="service-card__tags">
-                {svc.tags.map(tag => (
-                  <span key={tag} className="service-card__tag">{tag}</span>
-                ))}
-              </div>
-              <div className="service-card__border" />
-            </motion.div>
-          ))}
+            ))}
+          </Reveal>
         </div>
       </div>
 

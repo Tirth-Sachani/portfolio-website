@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HiCode, HiCube, HiColorSwatch, HiLightningBolt, HiCloud, HiDeviceMobile } from 'react-icons/hi';
+import Reveal from './Reveal';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -173,37 +174,41 @@ export default function About() {
             </div>
 
             <div className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative', zIndex: 10 }}>
-                <div className="about__top">
-                    <div className="about__header">
-                        <span className="section-label" style={{ display: 'block', marginBottom: '12px' }}>About Me</span>
-                        <h2 className="section-title">What I Do Best</h2>
+                <Reveal direction="up" delay={0.2}>
+                    <div className="about__top">
+                        <div className="about__header">
+                            <span className="section-label" style={{ display: 'block', marginBottom: '12px' }}>About Me</span>
+                            <h2 className="section-title">What I Do Best</h2>
+                        </div>
+                        <p className="about__desc">
+                            End-to-end digital solutions from concept to deployment, built with precision and passion. I specialize in crafting experiences that are both visually stunning and technically robust.
+                        </p>
                     </div>
-                    <p className="about__desc">
-                        End-to-end digital solutions from concept to deployment, built with precision and passion. I specialize in crafting experiences that are both visually stunning and technically robust.
-                    </p>
-                </div>
+                </Reveal>
 
                 <div className="about__grid">
-                    {aboutItems.map((item, i) => (
-                        <div
-                            key={item.title}
-                            className="about__card glass-card"
-                            style={{ perspective: '1200px' }}
-                        >
-                            <div className="about__card-icon-wrap">
-                                <div className="about__card-icon">{item.icon}</div>
-                                <div className="about__card-icon-glow" />
+                    <Reveal direction="up" stagger={0.1}>
+                        {aboutItems.map((item, i) => (
+                            <div
+                                key={item.title}
+                                className="about__card glass-card"
+                                style={{ perspective: '1200px' }}
+                            >
+                                <div className="about__card-icon-wrap">
+                                    <div className="about__card-icon">{item.icon}</div>
+                                    <div className="about__card-icon-glow" />
+                                </div>
+                                <h3 className="about__card-title">{item.title}</h3>
+                                <p className="about__card-desc">{item.desc}</p>
+                                <div className="about__card-tags">
+                                    {item.tags.map(tag => (
+                                        <span key={tag} className="about__card-tag">{tag}</span>
+                                    ))}
+                                </div>
+                                <div className="about__card-border" />
                             </div>
-                            <h3 className="about__card-title">{item.title}</h3>
-                            <p className="about__card-desc">{item.desc}</p>
-                            <div className="about__card-tags">
-                                {item.tags.map(tag => (
-                                    <span key={tag} className="about__card-tag">{tag}</span>
-                                ))}
-                            </div>
-                            <div className="about__card-border" />
-                        </div>
-                    ))}
+                        ))}
+                    </Reveal>
                 </div>
             </div>
 

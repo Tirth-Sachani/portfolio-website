@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic';
 import { HiArrowRight, HiChatAlt2 } from 'react-icons/hi';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import Magnetic from './Magnetic';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -149,20 +150,16 @@ export default function Hero() {
           </p>
 
           <div className="hero__actions" ref={actionsRef}>
-            <a
-              href="#portfolio"
-              className="btn-primary"
-              onClick={e => { e.preventDefault(); document.querySelector('#portfolio')?.scrollIntoView({ behavior: 'smooth' }); }}
-            >
-              View My Work <HiArrowRight />
-            </a>
-            <a
-              href="#contact"
-              className="btn-outline"
-              onClick={e => { e.preventDefault(); document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' }); }}
-            >
-              Let's Work Together <HiChatAlt2 />
-            </a>
+            <Magnetic strength={0.3}>
+              <a href="#contact" className="btn-primary" onClick={(e) => { e.preventDefault(); document.querySelector('#contact')?.scrollIntoView({ behavior: 'smooth' }); }}>
+                Let&apos;s Work Together <HiChatAlt2 />
+              </a>
+            </Magnetic>
+            <Magnetic strength={0.2}>
+              <a href="#portfolio" className="btn-outline" onClick={(e) => { e.preventDefault(); document.querySelector('#portfolio')?.scrollIntoView({ behavior: 'smooth' }); }}>
+                View Work <HiArrowRight />
+              </a>
+            </Magnetic>
           </div>
 
           <div className="hero__stats" ref={statsRef}>
@@ -514,6 +511,6 @@ export default function Hero() {
           }
         }
       `}</style>
-    </section>
+    </section >
   );
 }

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { HiMenuAlt3, HiX } from 'react-icons/hi';
+import { gsap } from 'gsap';
+import Magnetic from './Magnetic';
 
 const navLinks = [
   { label: 'Home', href: '#home' },
@@ -18,6 +20,15 @@ export default function Navbar() {
   const [activeSection, setActiveSection] = useState('home');
   const [hidden, setHidden] = useState(false);
   const [lastScroll, setLastScroll] = useState(0);
+  const navRef = useRef(null);
+
+  useEffect(() => {
+    // Entrance Animation
+    gsap.fromTo(navRef.current,
+      { y: -100, opacity: 0 },
+      { y: 0, opacity: 1, duration: 1.2, ease: 'power4.out', delay: 0.5 }
+    );
+  }, []);
 
   useEffect(() => {
     const onScroll = () => {
@@ -59,12 +70,14 @@ export default function Navbar() {
 
   return (
     <>
-      <nav className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${hidden ? 'navbar--hidden' : ''}`}>
+      <nav ref={navRef} className={`navbar ${scrolled ? 'navbar--scrolled' : ''} ${hidden ? 'navbar--hidden' : ''}`}>
         <div className="navbar__inner">
-          <a href="#home" className="navbar__logo" onClick={() => handleClick('#home')}>
-            <span className="navbar__logo-icon">⬡</span>
-            <span className="navbar__logo-text">Portfolio</span>
-          </a>
+          <Magnetic strength={0.2}>
+            <a href="#home" className="navbar__logo" onClick={() => handleClick('#home')}>
+              <span className="navbar__logo-icon">⬡</span>
+              <span className="navbar__logo-text">Portfolio</span>
+            </a>
+          </Magnetic>
 
           <ul className="navbar__links">
             {navLinks.map(link => (
@@ -80,13 +93,15 @@ export default function Navbar() {
             ))}
           </ul>
 
-          <a
-            href="#contact"
-            className="btn-primary navbar__cta"
-            onClick={e => { e.preventDefault(); handleClick('#contact'); }}
-          >
-            Let's Talk
-          </a>
+          <Magnetic strength={0.3}>
+            <a
+              href="#contact"
+              className="btn-primary navbar__cta"
+              onClick={e => { e.preventDefault(); handleClick('#contact'); }}
+            >
+              Let's Talk
+            </a>
+          </Magnetic>
 
           <button
             className="navbar__toggle"

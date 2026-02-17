@@ -1,9 +1,9 @@
 'use client';
 
-import { motion } from 'framer-motion';
-import { useInView } from 'react-intersection-observer';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { gsap } from 'gsap';
 import { HiChevronLeft, HiChevronRight, HiStar } from 'react-icons/hi';
+import Reveal from './Reveal';
 
 const testimonials = [
   {
@@ -44,7 +44,7 @@ const testimonials = [
 ];
 
 export default function Testimonials() {
-  const { ref, inView } = useInView({ triggerOnce: true, threshold: 0.1 });
+  const sectionRef = useRef(null);
   const [current, setCurrent] = useState(0);
   const [autoPlay, setAutoPlay] = useState(true);
 
@@ -63,86 +63,91 @@ export default function Testimonials() {
   }, [autoPlay, next]);
 
   return (
-    <section className="section" id="testimonials" ref={ref}>
+    <section className="section" id="testimonials" ref={sectionRef}>
       <div className="container">
-        <div className="section-header">
-          <span className="section-label">Testimonials</span>
-          <h2 className="section-title">What Clients Say</h2>
-          <p className="section-subtitle">
-            Hear from the people I've had the pleasure of working with.
-          </p>
-        </div>
+        <Reveal direction="up">
+          <div className="section-header">
+            <span className="section-label">Testimonials</span>
+            <h2 className="section-title">What Clients Say</h2>
+            <p className="section-subtitle">
+              Hear from the people I've had the pleasure of working with.
+            </p>
+          </div>
+        </Reveal>
 
-        <motion.div
-          className="testimonials-wrapper"
-          initial={{ opacity: 0, y: 30 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-        >
-          <div className="testimonials-slider">
-            <div
-              className="testimonials-track"
-              style={{
-                transform: `translateX(-${current * 100}%)`,
-                transition: 'transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-              }}
-            >
-              {testimonials.map((t, i) => (
-                <div key={i} className="testimonial-slide">
-                  <div className="testimonial-card glass-card"
-                    onMouseEnter={() => setAutoPlay(false)}
-                    onMouseLeave={() => setAutoPlay(true)}
-                  >
-                    <div className="testimonial-card__stars">
-                      {Array.from({ length: t.rating }, (_, j) => (
-                        <HiStar key={j} className="testimonial-card__star" />
-                      ))}
-                    </div>
-                    <blockquote className="testimonial-card__quote">
-                      &ldquo;{t.quote}&rdquo;
-                    </blockquote>
-                    <div className="testimonial-card__author">
-                      <div className="testimonial-card__avatar">{t.avatar}</div>
-                      <div>
-                        <div className="testimonial-card__name">{t.name}</div>
-                        <div className="testimonial-card__role">{t.role}</div>
+        <Reveal direction="up" delay={0.2}>
+          <div className="testimonials-wrapper">
+            <div className="testimonials-slider">
+              <div
+                className="testimonials-track"
+                style={{
+                  transform: `translateX(-${current * 100}%)`,
+                  transition: 'transform 0.8s cubic-bezier(0.25, 1, 0.5, 1)',
+                }}
+              >
+                {testimonials.map((t, i) => (
+                  <div key={i} className="testimonial-slide">
+                    <div
+                      className={`testimonial-card glass-card ${current === i ? 'active' : ''}`}
+                      onMouseEnter={() => setAutoPlay(false)}
+                      onMouseLeave={() => setAutoPlay(true)}
+                      style={{
+                        transform: current === i ? 'scale(1)' : 'scale(0.95)',
+                        opacity: current === i ? 1 : 0.4,
+                        transition: 'all 0.8s cubic-bezier(0.25, 1, 0.5, 1)'
+                      }}
+                    >
+                      <div className="testimonial-card__stars">
+                        {Array.from({ length: t.rating }, (_, j) => (
+                          <HiStar key={j} className="testimonial-card__star" />
+                        ))}
+                      </div>
+                      <blockquote className="testimonial-card__quote">
+                        &ldquo;{t.quote}&rdquo;
+                      </blockquote>
+                      <div className="testimonial-card__author">
+                        <div className="testimonial-card__avatar">{t.avatar}</div>
+                        <div>
+                          <div className="testimonial-card__name">{t.name}</div>
+                          <div className="testimonial-card__role">{t.role}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="testimonials-controls">
-            <button
-              className="testimonials-arrow"
-              onClick={prev}
-              aria-label="Previous testimonial"
-            >
-              <HiChevronLeft />
-            </button>
-
-            <div className="testimonials-dots">
-              {testimonials.map((_, i) => (
-                <button
-                  key={i}
-                  className={`testimonials-dot ${current === i ? 'testimonials-dot--active' : ''}`}
-                  onClick={() => setCurrent(i)}
-                  aria-label={`Go to testimonial ${i + 1}`}
-                />
-              ))}
+                ))}
+              </div>
             </div>
 
-            <button
-              className="testimonials-arrow"
-              onClick={next}
-              aria-label="Next testimonial"
-            >
-              <HiChevronRight />
-            </button>
+            <div className="testimonials-controls">
+              <button
+                className="testimonials-arrow"
+                onClick={prev}
+                aria-label="Previous testimonial"
+              >
+                <HiChevronLeft />
+              </button>
+
+              <div className="testimonials-dots">
+                {testimonials.map((_, i) => (
+                  <button
+                    key={i}
+                    className={`testimonials-dot ${current === i ? 'testimonials-dot--active' : ''}`}
+                    onClick={() => setCurrent(i)}
+                    aria-label={`Go to testimonial ${i + 1}`}
+                  />
+                ))}
+              </div>
+
+              <button
+                className="testimonials-arrow"
+                onClick={next}
+                aria-label="Next testimonial"
+              >
+                <HiChevronRight />
+              </button>
+            </div>
           </div>
-        </motion.div>
+        </Reveal>
       </div>
 
       <style jsx>{`
@@ -152,18 +157,23 @@ export default function Testimonials() {
         }
         .testimonials-slider {
           overflow: hidden;
-          border-radius: var(--radius-lg);
+          padding: 20px 0;
         }
         .testimonials-track {
           display: flex;
         }
         .testimonial-slide {
           min-width: 100%;
-          padding: 0 4px;
+          padding: 0 10px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
         }
         .testimonial-card {
           padding: 48px 40px;
           text-align: center;
+          width: 100%;
+          max-width: 700px;
         }
         .testimonial-card__stars {
           display: flex;
@@ -216,7 +226,7 @@ export default function Testimonials() {
           align-items: center;
           justify-content: center;
           gap: 20px;
-          margin-top: 32px;
+          margin-top: 20px;
         }
         .testimonials-arrow {
           width: 44px;

@@ -125,6 +125,18 @@ export default function Portfolio() {
         }
       });
 
+      // Atmospheric Pulse
+      atmos.forEach(a => {
+        gsap.to(a, {
+          scale: 1.2,
+          opacity: '+=0.1',
+          duration: 3,
+          repeat: -1,
+          yoyo: true,
+          ease: 'sine.inOut'
+        });
+      });
+
       // Parallax for background "GALLERY" text
       gsap.to(bgText, {
         x: '-20%',
